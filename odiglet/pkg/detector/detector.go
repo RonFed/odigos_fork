@@ -2,6 +2,7 @@ package detector
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/odigos-io/odigos/common/envOverwrite"
@@ -18,6 +19,7 @@ func K8sDetectorOptions(logger logr.Logger) []detector.DetectorOption {
 		detector.WithEnvironments(relevantEnvVars()...),
 		detector.WithEnvPrefixFilter(consts.OdigosEnvVarPodName),
 		detector.WithExePathsToFilter("/usr/bin/bash", "/bin/bash", "/bin/sh", "/usr/bin/sh", "/bin/busybox", "/usr/bin/dash"),
+		detector.WithMinDuration(2 * time.Second),
 	}
 
 	return opts

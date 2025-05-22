@@ -113,6 +113,12 @@ func copyFile(src, dst string, buf []byte) error {
 	}
 	defer srcFile.Close()
 
+	// Get source file info to preserve permissions
+	srcInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
 	// Create destination file and directories if needed
 	err = os.MkdirAll(filepath.Dir(dst), os.ModePerm)
 	if err != nil {
@@ -141,7 +147,8 @@ func copyFile(src, dst string, buf []byte) error {
 		}
 	}
 
-	return nil
+	// Preserve the original file permissions
+	return os.Chmod(dst, srcInfo.Mode())
 }
 
 func HostContainsEbpfDir(dir string) bool {

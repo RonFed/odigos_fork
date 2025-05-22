@@ -6,6 +6,9 @@ LIBRARIES := go.opentelemetry.io/auto \
 build-odiglet: generate
 	CGO_ENABLED=0 go build -ldflags="$(LD_FLAGS)" -o odiglet cmd/main.go
 
+build-go-plugin: generate
+	CGO_ENABLED=0 go build -ldflags="$(LD_FLAGS)" -o $(PLUGIN_BIN) plugins/golang/main.go
+
 debug-build-odiglet: generate
 	go build -o odiglet -gcflags "all=-N -l" cmd/main.go
 

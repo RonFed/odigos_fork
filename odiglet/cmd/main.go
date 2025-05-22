@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/odigos-io/odigos/distros"
+	"github.com/odigos-io/odigos/k8sutils/pkg/feature"
 	"github.com/odigos-io/odigos/odiglet"
 	"github.com/odigos-io/odigos/odiglet/pkg/ebpf"
-	"github.com/odigos-io/odigos/odiglet/pkg/ebpf/sdks"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
@@ -52,6 +52,12 @@ func main() {
 	// Load env
 	if err := env.Load(); err != nil {
 		log.Logger.Error(err, "Failed to load env")
+		os.Exit(1)
+	}
+
+	err = feature.Setup()
+	if err != nil {
+		log.Logger.Error(err, "Failed to setup feature package")
 		os.Exit(1)
 	}
 
@@ -102,10 +108,16 @@ func deviceInjectionCallbacks() instrumentation.OtelSdksLsf {
 }
 
 func ebpfInstrumentationFactories() map[commonInstrumentation.OtelDistribution]commonInstrumentation.Factory {
+	goCommunityFactory, err := ebpf.NewInstrumentationPluginFactory("/var/odigos/plugins/go_community")
+	if err != nil {
+		log.Logger.Error(err, "Failed to create go community instrumentation factory")
+		os.Exit(1)
+	}
+
 	return map[commonInstrumentation.OtelDistribution]commonInstrumentation.Factory{
 		commonInstrumentation.OtelDistribution{
 			Language: common.GoProgrammingLanguage,
 			OtelSdk:  common.OtelSdkEbpfCommunity,
-		}: sdks.NewGoInstrumentationFactory(),
+		}: goCommunityFactory,
 	}
 }

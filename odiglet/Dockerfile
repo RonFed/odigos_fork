@@ -100,6 +100,24 @@ RUN for v in ${PHP_VERSIONS}; do \
     rm -rf opentelemetry-php/$v/bin; \
     done
 
+######### Go community ebpf instrumentation plugin #########
+FROM --platform=$BUILDPLATFORM registry.odigos.io/odiglet-base:v1.8 AS go-community-plugin
+WORKDIR /go/src/github.com/odigos-io/odigos
+COPY api/ api/
+COPY common/ common/
+COPY k8sutils/ k8sutils/
+COPY procdiscovery/ procdiscovery/
+COPY opampserver/ opampserver/
+COPY instrumentation/ instrumentation/
+COPY distros/ distros/
+WORKDIR /go/src/github.com/odigos-io/odigos/odiglet
+COPY odiglet/ .
+
+ARG TARGETARCH
+ARG LD_FLAGS
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    --mount=type=cache,target=/go/pkg \
+    GOOS=linux GOARCH=$TARGETARCH LD_FLAGS="${LD_FLAGS}" PLUGIN_BIN="go-plugin" make build-go-plugin
 
 ######### ODIGLET #########
 FROM --platform=$BUILDPLATFORM registry.odigos.io/odiglet-base:v1.8 AS builder
@@ -144,6 +162,9 @@ COPY --from=php-agents /php-agents/opentelemetry-php/8.2 /instrumentations/php/8
 COPY --from=php-agents /php-agents/opentelemetry-php/8.3 /instrumentations/php/8.3
 COPY --from=php-agents /php-agents/opentelemetry-php/8.4 /instrumentations/php/8.4
 
+# Go community ebpf instrumentation plugin
+COPY --from=go-community-plugin /go/src/github.com/odigos-io/odigos/odiglet/go-plugin /instrumentations/plugins/go_community
+
 # loader
 ARG ODIGOS_LOADER_VERSION=v0.0.3
 RUN wget https://storage.googleapis.com/odigos-loader/$ODIGOS_LOADER_VERSION/$TARGETARCH/loader.so
@@ -152,4 +173,5 @@ FROM gcr.io/distroless/base:latest
 COPY --from=builder /go/src/github.com/odigos-io/odigos/odiglet/odiglet /root/odiglet
 WORKDIR /instrumentations/
 COPY --from=builder /instrumentations/ .
+COPY --from=builder --chmod=+x /instrumentations/plugins /instrumentations/plugins
 CMD ["/root/odiglet"]

@@ -11,7 +11,6 @@ import (
 	commonInstrumentation "github.com/odigos-io/odigos/instrumentation"
 	criwrapper "github.com/odigos-io/odigos/k8sutils/pkg/cri"
 	k8senv "github.com/odigos-io/odigos/k8sutils/pkg/env"
-	"github.com/odigos-io/odigos/k8sutils/pkg/feature"
 	k8snode "github.com/odigos-io/odigos/k8sutils/pkg/node"
 	"github.com/odigos-io/odigos/odiglet/pkg/ebpf"
 	"github.com/odigos-io/odigos/odiglet/pkg/env"
@@ -40,11 +39,6 @@ const (
 
 // New creates a new Odiglet instance.
 func New(clientset *kubernetes.Clientset, deviceInjectionCallbacks instrumentation.OtelSdksLsf, instrumentationMgrOpts ebpf.InstrumentationManagerOptions) (*Odiglet, error) {
-	err := feature.Setup()
-	if err != nil {
-		return nil, err
-	}
-
 	mgr, err := kube.CreateManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller-runtime manager %w", err)
@@ -123,6 +117,7 @@ func (o *Odiglet) Run(ctx context.Context) {
 			log.Logger.Error(err, "Failed to run ebpf manager")
 		}
 		log.Logger.V(0).Info("eBPF manager exited")
+		ebpf.CleanupPlugins()
 		return err
 	})
 

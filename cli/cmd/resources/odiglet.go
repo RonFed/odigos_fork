@@ -323,6 +323,8 @@ func NewOdigletDaemonSet(ns string, version string, imagePrefix string, imageNam
 		rollingUpdate.MaxSurge = &maxSurge
 	}
 
+	bidirectionalPropagation := corev1.MountPropagationBidirectional
+
 	ds := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -394,6 +396,14 @@ func NewOdigletDaemonSet(ns string, version string, imagePrefix string, imageNam
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/sys/kernel/debug",
+								},
+							},
+						},
+						{
+							Name: "bpf-maps",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: k8sconsts.BpfFsMountPath,
 								},
 							},
 						},
@@ -644,6 +654,11 @@ func NewOdigletDaemonSet(ns string, version string, imagePrefix string, imageNam
 								{
 									Name:      "kernel-debug",
 									MountPath: "/sys/kernel/debug",
+								},
+								{
+									Name:      "bpf-maps",
+									MountPath: k8sconsts.BpfFsMountPath,
+									MountPropagation: &bidirectionalPropagation,
 								},
 							}, additionalVolumeMounts...),
 							ImagePullPolicy: "IfNotPresent",

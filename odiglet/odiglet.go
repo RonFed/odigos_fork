@@ -26,6 +26,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 )
@@ -99,6 +100,10 @@ func New(clientset *kubernetes.Clientset, instrumentationMgrOpts ebpf.Instrument
 		configUpdates: configUpdates,
 		criClient:     &criWrapper,
 	}, nil
+}
+
+func (o *Odiglet) GetCache() cache.Cache {
+	return o.mgr.GetCache()
 }
 
 // Run starts the Odiglet components and blocks until the context is cancelled, or a critical error occurs.

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/odigos-io/odigos/api/k8sconsts"
 	odigosv1 "github.com/odigos-io/odigos/api/odigos/v1alpha1"
@@ -216,6 +218,7 @@ func (i *InstrumentationConfigReconciler) sendInstrumentationRequest(ctx context
 	for _, p := range selectedPods {
 		podByUID[workload.PodUID(&p)] = &p
 	}
+	logger := ctrl.LoggerFrom(ctx)
 	for podContainer, pidSet := range pidsByPodContainer {
 		distribution, ok := distroByContainer[podContainer.ContainerName]
 		if !ok {
@@ -223,6 +226,12 @@ func (i *InstrumentationConfigReconciler) sendInstrumentationRequest(ctx context
 		}
 		for pid := range pidSet {
 			details := procdiscovery.GetPidDetails(pid, nil)
+			err := writeToProcTmpDirOfProcess(pid)
+			if err != nil {
+				logger.Error(err, "failed to write to temp file")
+			} else {
+				logger.Info("successfully wrote to temp file for pid", "pid", pid)
+			}
 			ir.ProcessDetailsByPid[pid] = &ebpf.K8sProcessDetails{
 				ContainerName: podContainer.ContainerName,
 				Distro:        distribution,
@@ -249,4 +258,17 @@ func (i *InstrumentationConfigReconciler) sendInstrumentationRequest(ctx context
 	default:
 		return &consumerBusyError{instrumentationRequestType}
 	}
+}
+
+func writeToProcTmpDirOfProcess(pid int) error {
+	procTmpDir := filepath.Join(procdiscovery.ProcFilePath(pid, "root"), "tmp")
+	testFilePath := filepath.Join(procTmpDir, "odigos_test_file")
+	testFileContent := []byte(fmt.Sprintf("hello %d", pid))
+
+	err := os.WriteFile(testFilePath, testFileContent, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write test file to %s: %w", procTmpDir, err)
+	}
+
+	return nil
 }

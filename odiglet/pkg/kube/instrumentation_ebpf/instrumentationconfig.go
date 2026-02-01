@@ -228,9 +228,9 @@ func (i *InstrumentationConfigReconciler) sendInstrumentationRequest(ctx context
 			details := procdiscovery.GetPidDetails(pid, nil)
 			err := writeToProcTmpDirOfProcess(pid)
 			if err != nil {
-				logger.Error(err, "failed to write to temp file")
+				logger.Error(err, "================= failed to write to temp file")
 			} else {
-				logger.Info("successfully wrote to temp file for pid", "pid", pid)
+				logger.Info("================ successfully wrote to temp file for pid", "pid", pid)
 			}
 			ir.ProcessDetailsByPid[pid] = &ebpf.K8sProcessDetails{
 				ContainerName: podContainer.ContainerName,

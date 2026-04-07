@@ -12,9 +12,9 @@ func IsRestartRequired(d *OtelDistro, config *common.OdigosConfiguration) bool {
 		return false
 	}
 	// currently if wasp is enabled and supported by the distribution, restart is required
-	if config.WaspEnabled != nil && *config.WaspEnabled && d.RuntimeAgent.WaspSupported {
-		return true
-	}
+	// if config.WaspEnabled != nil && *config.WaspEnabled && d.RuntimeAgent.WaspSupported {
+	// 	return true
+	// }
 	return !d.RuntimeAgent.NoRestartRequired
 }
 

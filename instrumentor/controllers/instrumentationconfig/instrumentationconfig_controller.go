@@ -18,6 +18,7 @@ package instrumentationconfig
 
 import (
 	"context"
+	"time"
 
 	odigosv1 "github.com/odigos-io/odigos/api/odigos/v1alpha1"
 	commonlogger "github.com/odigos-io/odigos/common/logger"
@@ -40,6 +41,8 @@ func (r *InstrumentationConfigReconciler) Reconcile(ctx context.Context, req ctr
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	time.Sleep(10 * time.Second)
 
 	instrumentationRules := &odigosv1.InstrumentationRuleList{}
 	err = r.Client.List(ctx, instrumentationRules)
